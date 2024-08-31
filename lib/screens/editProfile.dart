@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../components/appTheme.dart';
 
 class Editprofile extends StatefulWidget {
   final bool isAdmin;
@@ -81,106 +82,64 @@ class _EditProfileState extends State<Editprofile> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: _navigateToProfileScreen,
+    return Theme(
+      data: AppTheme.lightTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Edit Profile'),
+          actions: [
+            TextButton(
+              onPressed: _updateProfile,
+              child: Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         ),
-        title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.amber,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: _updateProfile,
-            child: Text('Save', style: TextStyle(color: Colors.white)),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 20),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: AppTheme.accentColor,
+                  child: Icon(Icons.person, size: 50, color: Colors.white),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Edit Your Profile',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 30),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: _nameController,
+                        labelText: 'Name',
+                        icon: Icons.person,
+                      ),
+                      SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _emailController,
+                        labelText: 'Email',
+                        icon: Icons.email,
+                      ),
+                      SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _phoneController,
+                        labelText: 'Phone Number',
+                        icon: Icons.phone,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildForm(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        color: Colors.amber,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 50, color: Colors.amber),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Edit Your Profile',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildForm() {
-    return Container(
-      margin: EdgeInsets.all(20),
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            _buildTextField(
-              controller: _nameController,
-              labelText: 'Name',
-              icon: Icons.person,
-            ),
-            SizedBox(height: 20),
-            _buildTextField(
-              controller: _emailController,
-              labelText: 'Email',
-              icon: Icons.email,
-            ),
-            SizedBox(height: 20),
-            _buildTextField(
-              controller: _phoneController,
-              labelText: 'Phone Number',
-              icon: Icons.phone,
-            ),
-          ],
         ),
       ),
     );
@@ -195,15 +154,7 @@ class _EditProfileState extends State<Editprofile> {
       controller: controller,
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: Icon(icon, color: Colors.amber),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.amber!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.amber!, width: 2),
-        ),
+        prefixIcon: Icon(icon),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

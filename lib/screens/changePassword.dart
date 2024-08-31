@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../components/appTheme.dart';
 
 class Changepassword extends StatefulWidget {
   final bool isAdmin;
@@ -14,6 +15,7 @@ class _ChangePasswordState extends State<Changepassword> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isObscure = true;
 
   Future<void> _changePassword() async {
     if (_formKey.currentState!.validate()) {
@@ -47,113 +49,63 @@ class _ChangePasswordState extends State<Changepassword> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Text('Change Password', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.amber,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildForm(),
-          ],
+    return Theme(
+      data: AppTheme.lightTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Change Password'),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        color: Colors.amber,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 80, color: Colors.white),
-            SizedBox(height: 10),
-            Text(
-              'Change Your Password',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildForm() {
-    return Container(
-      margin: EdgeInsets.all(20),
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            _buildPasswordField(
-              controller: _currentPasswordController,
-              labelText: 'Current Password',
-            ),
-            SizedBox(height: 20),
-            _buildPasswordField(
-              controller: _newPasswordController,
-              labelText: 'New Password',
-            ),
-            SizedBox(height: 20),
-            _buildPasswordField(
-              controller: _confirmPasswordController,
-              labelText: 'Confirm New Password',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your new password';
-                }
-                if (value != _newPasswordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _changePassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 20),
+                Icon(Icons.lock_outline,
+                    size: 80, color: AppTheme.primaryColor),
+                SizedBox(height: 20),
+                Text(
+                  'Change Your Password',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center,
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-              ),
-              child: Text(
-                'Change Password',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
+                SizedBox(height: 30),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildPasswordField(
+                        controller: _currentPasswordController,
+                        labelText: 'Current Password',
+                      ),
+                      SizedBox(height: 20),
+                      _buildPasswordField(
+                        controller: _newPasswordController,
+                        labelText: 'New Password',
+                      ),
+                      SizedBox(height: 20),
+                      _buildPasswordField(
+                        controller: _confirmPasswordController,
+                        labelText: 'Confirm New Password',
+                        validator: (value) {
+                          if (value != _newPasswordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: _changePassword,
+                        child: Text('Change Password'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -166,17 +118,17 @@ class _ChangePasswordState extends State<Changepassword> {
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: true,
+      obscureText: _isObscure,
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: Icon(Icons.lock, color: Colors.amber),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.amber!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.amber!, width: 2),
+        prefixIcon: Icon(Icons.lock),
+        suffixIcon: IconButton(
+          icon: Icon(_isObscure ? Icons.visibility : Icons.visibility_off),
+          onPressed: () {
+            setState(() {
+              _isObscure = !_isObscure;
+            });
+          },
         ),
       ),
       validator: validator ??

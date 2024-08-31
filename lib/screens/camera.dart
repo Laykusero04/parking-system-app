@@ -1,5 +1,5 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -43,7 +43,6 @@ class _CameraScreenState extends State<CameraScreen> {
       return;
     }
     final image = await _controller!.takePicture();
-
     final recognizedText = await _processImageWithMLKit(image.path);
     setState(() {
       _plateNumberController.text = recognizedText ?? '';
@@ -79,7 +78,6 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       final firestore = FirebaseFirestore.instance;
       if (widget.isParkIn) {
-        // Check if there's already a parked vehicle with this plate number
         final existingRecord = await firestore
             .collection('plate_numbers')
             .where('plate_number', isEqualTo: plateNumber)
@@ -98,7 +96,6 @@ class _CameraScreenState extends State<CameraScreen> {
           'date': FieldValue.serverTimestamp(),
         });
       } else {
-        // Find the document with matching plate number and update it
         QuerySnapshot querySnapshot = await firestore
             .collection('plate_numbers')
             .where('plate_number', isEqualTo: plateNumber)
@@ -138,12 +135,15 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7D4),
+      backgroundColor: const Color(0xFFFFF3E0), // Light amber background
       appBar: AppBar(
-        title: Text(widget.isParkIn ? 'Park In' : 'Park Out'),
+        title: Text(
+          widget.isParkIn ? 'Park In' : 'Park Out',
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: widget.isParkIn ? Colors.green : Colors.red,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -155,7 +155,7 @@ class _CameraScreenState extends State<CameraScreen> {
             )
           else
             const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Colors.brown),
             ),
           Positioned(
             bottom: 0,
@@ -163,12 +163,21 @@ class _CameraScreenState extends State<CameraScreen> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height / 1.7,
             child: Container(
-              color: const Color(0xFFFFF7D4),
-            ),
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: Padding(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(
+                    255, 255, 240, 217), // Amber color for UI consistency
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 5,
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -177,24 +186,40 @@ class _CameraScreenState extends State<CameraScreen> {
                     controller: _plateNumberController,
                     decoration: InputDecoration(
                       labelText: 'Plate Number',
-                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Vehicle Type: ${widget.vehicleType}',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _savePlateNumber,
-                    child: Text(widget.isParkIn ? 'Park In' : 'Park Out'),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber[700], // Brown button color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
+                      elevation: 5,
+                    ),
+                    child: Text(
+                      widget.isParkIn ? 'Park In' : 'Park Out',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -205,7 +230,8 @@ class _CameraScreenState extends State<CameraScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _captureAndProcessImage,
-        child: const Icon(Icons.camera),
+        backgroundColor: Colors.amber[700], // Brown button
+        child: const Icon(Icons.camera, color: Colors.white),
       ),
     );
   }

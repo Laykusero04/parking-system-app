@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../components/appTheme.dart';
 import '../components/drawer.dart';
 
 class Profilescreen extends StatefulWidget {
@@ -41,32 +42,32 @@ class _ProfileScreenState extends State<Profilescreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.amber,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).pushReplacementNamed(
-                '/editProfile',
-                arguments: widget.isAdmin,
-              );
-            },
-          ),
-        ],
-      ),
-      drawer: CustomDrawer(isAdmin: widget.isAdmin),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildProfileInfo(),
-            _buildChangePasswordButton(),
+    return Theme(
+      data: AppTheme.lightTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Profile'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.of(context).pushReplacementNamed(
+                  '/editProfile',
+                  arguments: widget.isAdmin,
+                );
+              },
+            ),
           ],
+        ),
+        drawer: CustomDrawer(isAdmin: widget.isAdmin),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildProfileInfo(),
+              _buildChangePasswordButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -75,26 +76,20 @@ class _ProfileScreenState extends State<Profilescreen> {
   Widget _buildHeader() {
     return Container(
       height: 200,
-      decoration: BoxDecoration(
-        color: Colors.amber,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
+      color: AppTheme.primaryColor,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 50,
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 50, color: Colors.amber),
+              child: Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               _name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -107,68 +102,43 @@ class _ProfileScreenState extends State<Profilescreen> {
   }
 
   Widget _buildProfileInfo() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildInfoTile(Icons.email, 'Email', _email),
-          const Divider(height: 20),
-          _buildInfoTile(Icons.phone, 'Phone', _phone),
-        ],
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildInfoTile(Icons.email, 'Email', _email),
+            Divider(height: 20),
+            _buildInfoTile(Icons.phone, 'Phone', _phone),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInfoTile(IconData icon, String title, String value) {
     return ListTile(
-      leading: Icon(icon, color: Colors.amber),
+      leading: Icon(icon, color: AppTheme.primaryColor),
       title:
           Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 16)),
-      subtitle: Text(value,
-          style: const TextStyle(color: Colors.black, fontSize: 18)),
+      subtitle:
+          Text(value, style: TextStyle(color: Colors.black, fontSize: 18)),
     );
   }
 
   Widget _buildChangePasswordButton() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.amber,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+      child: ElevatedButton.icon(
+        icon: Icon(Icons.lock_outline),
+        label: Text("Change Password"),
         onPressed: () {
           Navigator.of(context).pushNamed(
             '/changePassword',
             arguments: widget.isAdmin,
           );
         },
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, color: Colors.white),
-            SizedBox(width: 10),
-            Text(
-              "Change Password",
-              style: TextStyle(fontSize: 18, color: Colors.white),
-            ),
-          ],
-        ),
       ),
     );
   }

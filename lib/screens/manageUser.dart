@@ -61,6 +61,32 @@ class _ManageuserState extends State<Manageuser> {
     }
   }
 
+  Future<void> _deleteUser(String userId, String userEmail) async {
+    try {
+      // Delete user from Firebase Authentication
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.email == userEmail) {
+        await user.delete();
+      } else {
+        // If the current user is not the one being deleted, you might need admin SDK
+        // or Cloud Functions to delete other users from Authentication
+        print(
+            'Warning: Unable to delete user from Authentication. Admin SDK required.');
+      }
+
+      // Delete user from Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting user: $e')),
+      );
+    }
+  }
+
   void _clearForm() {
     _nameController.clear();
     _emailController.clear();
@@ -94,7 +120,7 @@ class _ManageuserState extends State<Manageuser> {
               DocumentSnapshot document = snapshot.data!.docs[index];
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
-              return _buildUserCard(data);
+              return _buildUserCard(data, document.id);
             },
           );
         },
@@ -107,7 +133,7 @@ class _ManageuserState extends State<Manageuser> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> data) {
+  Widget _buildUserCard(Map<String, dynamic> data, String userId) {
     bool isAdmin = data['role'] == 2;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
@@ -143,18 +169,28 @@ class _ManageuserState extends State<Manageuser> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isAdmin ? 'Admin' : 'User',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 14),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            isAdmin ? 'Admin' : 'User',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          onPressed: () => _showDeleteConfirmation(
+                              context, userId, data['email']),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -167,6 +203,33 @@ class _ManageuserState extends State<Manageuser> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+      BuildContext context, String userId, String userEmail) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content:
+              Text('Are you sure you want to delete the user ${userEmail}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteUser(userId, userEmail);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 

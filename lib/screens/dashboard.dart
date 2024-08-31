@@ -1,52 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../components/drawer.dart';
 import '../components/floatingButton.dart';
 import 'parkInOut.dart';
 
 class Dashboard extends StatefulWidget {
   final bool isAdmin;
-  const Dashboard({super.key, required this.isAdmin});
+  const Dashboard({Key? key, required this.isAdmin}) : super(key: key);
 
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
-  int parkCount = 0;
+class _DashboardState extends State<Dashboard> {
   int userCount = 0;
   int maxCar = 10;
   int maxMotorcycle = 30;
   int currentParkedCars = 0;
   int currentParkedMotorcycles = 0;
-  int _currentIndex = 0; // For BottomNavigationBar
+  int totalParkCount = 0;
+  int _currentIndex = 0;
   late FocusNode _focusNode;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-    WidgetsBinding.instance.addObserver(this);
+    _refreshTimer =
+        Timer.periodic(const Duration(seconds: 30), (_) => fetchData());
     fetchData();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
     _focusNode.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      fetchData();
-    }
-  }
-
   Future<void> fetchData() async {
+    if (!mounted) return;
+
     final firestore = FirebaseFirestore.instance;
-    final parkSnapshot = await firestore.collection('parks').get();
     final userSnapshot = await firestore.collection('users').get();
     final carSnapshot = await firestore
         .collection('plate_numbers')
@@ -61,14 +58,22 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     final settingsSnapshot =
         await firestore.collection('settings').doc('parking_slots').get();
 
-    setState(() {
-      parkCount = parkSnapshot.docs.length;
-      userCount = userSnapshot.docs.length;
-      currentParkedCars = carSnapshot.docs.length;
-      currentParkedMotorcycles = motorcycleSnapshot.docs.length;
-      maxCar = settingsSnapshot.data()?['max_cars'] ?? 10;
-      maxMotorcycle = settingsSnapshot.data()?['max_motorcycles'] ?? 30;
-    });
+    final allParkingSnapshot = await firestore
+        .collection('plate_numbers')
+        .orderBy('date', descending: true)
+        .limit(1000)
+        .get();
+
+    if (mounted) {
+      setState(() {
+        totalParkCount = allParkingSnapshot.docs.length;
+        userCount = userSnapshot.docs.length;
+        currentParkedCars = carSnapshot.docs.length;
+        currentParkedMotorcycles = motorcycleSnapshot.docs.length;
+        maxCar = settingsSnapshot.data()?['max_cars'] ?? 10;
+        maxMotorcycle = settingsSnapshot.data()?['max_motorcycles'] ?? 30;
+      });
+    }
   }
 
   Future<void> _refreshData() async {
@@ -87,8 +92,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
           isAdmin: widget.isAdmin,
         ),
       ),
-    ).then((_) =>
-        fetchData()); // Refresh data when returning from Parkinout screen
+    ).then((_) => fetchData());
   }
 
   @override
@@ -96,41 +100,32 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7D4),
       appBar: AppBar(
-        title: const Text('Parking Management'),
+        title: const Text('Dashboard'),
         backgroundColor: Colors.amber,
       ),
       drawer: CustomDrawer(isAdmin: widget.isAdmin),
-      body: Focus(
-        focusNode: _focusNode,
-        child: RefreshIndicator(
-          onRefresh: _refreshData,
-          color: Colors.amber,
-          backgroundColor: Colors.white,
-          child: ListView(
-            padding: const EdgeInsets.all(14.0),
-            children: [
-              if (widget.isAdmin) ...[
-                _buildSectionTitle('Overview'),
-                _buildInfoRow(
-                    'Total Parks', parkCount.toString(), Icons.local_parking),
-                _buildInfoRow(
-                    'Total Users', userCount.toString(), Icons.people),
-                const SizedBox(height: 24),
-              ],
-              _buildSectionTitle('Parking Status'),
-              _buildParkingStatusCard(
-                  'Cars', maxCar, currentParkedCars, Icons.directions_car),
-              const SizedBox(height: 16),
-              _buildParkingStatusCard('Motorcycles', maxMotorcycle,
-                  currentParkedMotorcycles, Icons.motorcycle),
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        color: Colors.amber,
+        backgroundColor: Colors.white,
+        child: ListView(
+          padding: const EdgeInsets.all(14.0),
+          children: [
+            if (widget.isAdmin) ...[
+              _buildSectionTitle('Overview'),
+              _buildInfoRow('Total Parks', totalParkCount.toString(),
+                  Icons.local_parking),
+              _buildInfoRow('Total Users', userCount.toString(), Icons.people),
+              const SizedBox(height: 24),
             ],
-          ),
+            _buildSectionTitle('Parking Status'),
+            _buildParkingStatusCard(
+                'Cars', maxCar, currentParkedCars, Icons.directions_car),
+            const SizedBox(height: 16),
+            _buildParkingStatusCard('Motorcycles', maxMotorcycle,
+                currentParkedMotorcycles, Icons.motorcycle),
+          ],
         ),
-        onFocusChange: (hasFocus) {
-          if (hasFocus) {
-            fetchData();
-          }
-        },
       ),
       floatingActionButton: widget.isAdmin ? const Floatingbutton() : null,
       bottomNavigationBar: widget.isAdmin
@@ -139,16 +134,26 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
               items: const <BottomNavigationBarItem>[
                 BottomNavigationBarItem(
                   icon: Icon(Icons.login),
+                  activeIcon: Icon(Icons.login, size: 30),
                   label: 'Park In',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.exit_to_app),
+                  activeIcon: Icon(Icons.exit_to_app, size: 30),
                   label: 'Park Out',
                 ),
               ],
               currentIndex: _currentIndex,
               selectedItemColor: Colors.amber[800],
+              unselectedItemColor: Colors.grey,
+              backgroundColor: Colors.brown[800],
+              type: BottomNavigationBarType.fixed,
+              selectedFontSize: 14.0,
+              unselectedFontSize: 12.0,
+              showUnselectedLabels: true,
+              elevation: 8.0,
               onTap: _onItemTapped,
+              iconSize: 26.0,
             ),
     );
   }
