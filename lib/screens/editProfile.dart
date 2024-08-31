@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../components/textfieldComponent.dart';
 
 class Editprofile extends StatefulWidget {
   final bool isAdmin;
   const Editprofile({Key? key, required this.isAdmin}) : super(key: key);
 
   @override
-  State<Editprofile> createState() => _ProfilescreenState();
+  State<Editprofile> createState() => _EditProfileState();
 }
 
-class _ProfilescreenState extends State<Editprofile> {
+class _EditProfileState extends State<Editprofile> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -54,87 +53,164 @@ class _ProfilescreenState extends State<Editprofile> {
             'phone': _phoneController.text,
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully')),
+            SnackBar(
+              content: Text('Profile updated successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
+          _navigateToProfileScreen();
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
+          SnackBar(
+            content: Text('Error updating profile: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
 
+  void _navigateToProfileScreen() {
+    Navigator.pushReplacementNamed(
+      context,
+      '/profile',
+      arguments: widget.isAdmin,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pushReplacementNamed(
-              '/profile',
-              arguments: widget.isAdmin,
-            );
-          },
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: _navigateToProfileScreen,
         ),
-        title: const Text('Edit Profile'),
+        title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.amber,
+        elevation: 0,
         actions: [
           TextButton(
             onPressed: _updateProfile,
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
+            child: Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const CircleAvatar(
-                radius: 50,
-                //backgroundImage: AssetImage('assets/profile_image.png'),
-              ),
-              const SizedBox(height: 16),
-              Textfieldcomponent(
-                labelText: 'Name',
-                controller: _nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Textfieldcomponent(
-                labelText: 'Your Email',
-                controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Textfieldcomponent(
-                labelText: 'Phone Number',
-                controller: _phoneController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildForm(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.amber,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 50, color: Colors.amber),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Edit Your Profile',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Container(
+      margin: EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildTextField(
+              controller: _nameController,
+              labelText: 'Name',
+              icon: Icons.person,
+            ),
+            SizedBox(height: 20),
+            _buildTextField(
+              controller: _emailController,
+              labelText: 'Email',
+              icon: Icons.email,
+            ),
+            SizedBox(height: 20),
+            _buildTextField(
+              controller: _phoneController,
+              labelText: 'Phone Number',
+              icon: Icons.phone,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        prefixIcon: Icon(icon, color: Colors.amber),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.amber!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.amber!, width: 2),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your $labelText';
+        }
+        return null;
+      },
     );
   }
 }

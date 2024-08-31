@@ -94,6 +94,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF7D4),
       appBar: AppBar(
         title: const Text('Parking Management'),
         backgroundColor: Colors.amber,
@@ -105,23 +106,23 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
           onRefresh: _refreshData,
           color: Colors.amber,
           backgroundColor: Colors.white,
-          child: GridView.count(
-            crossAxisCount: 2,
-            padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            padding: const EdgeInsets.all(14.0),
             children: [
               if (widget.isAdmin) ...[
-                _buildInfoCard('', 'Total Parks', parkCount.toString()),
-                _buildInfoCard('', 'Total Users', userCount.toString()),
-                _buildInfoCard(
-                    'Cars', 'Max: $maxCar', 'Current: $currentParkedCars'),
-                _buildInfoCard('Motorcycles', 'Max: $maxMotorcycle',
-                    'Current: $currentParkedMotorcycles'),
-              ] else ...[
-                _buildInfoCard(
-                    'Cars', 'Max: $maxCar', 'Current: $currentParkedCars'),
-                _buildInfoCard('Motorcycles', 'Max: $maxMotorcycle',
-                    'Current: $currentParkedMotorcycles'),
+                _buildSectionTitle('Overview'),
+                _buildInfoRow(
+                    'Total Parks', parkCount.toString(), Icons.local_parking),
+                _buildInfoRow(
+                    'Total Users', userCount.toString(), Icons.people),
+                const SizedBox(height: 24),
               ],
+              _buildSectionTitle('Parking Status'),
+              _buildParkingStatusCard(
+                  'Cars', maxCar, currentParkedCars, Icons.directions_car),
+              const SizedBox(height: 16),
+              _buildParkingStatusCard('Motorcycles', maxMotorcycle,
+                  currentParkedMotorcycles, Icons.motorcycle),
             ],
           ),
         ),
@@ -152,33 +153,136 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildInfoCard(String title, String maxValue, String currentValue) {
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF4C3C3C),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, String value, IconData icon) {
     return Card(
-      color: Colors.grey[800],
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            currentValue,
-            style: const TextStyle(
-                fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Column(
-            children: [
-              Text(
-                maxValue,
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-                textAlign: TextAlign.center,
+      elevation: 2,
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.amber[700], size: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.brown[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Color(0xFF4C3C3C),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParkingStatusCard(
+      String title, int max, int current, IconData icon) {
+    double occupancyRate = current / max;
+    Color statusColor = occupancyRate < 0.7
+        ? Colors.green
+        : occupancyRate < 0.9
+            ? Colors.orange
+            : Colors.red;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.brown[500]!, Colors.brown[900]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(icon, color: Colors.amber[700], size: 28),
+                      const SizedBox(width: 8),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(occupancyRate * 100).toStringAsFixed(0)}% Full',
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              LinearProgressIndicator(
+                value: occupancyRate,
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+              ),
+              const SizedBox(height: 8),
               Text(
-                title,
+                'Current: $current / Max: $max',
                 style: const TextStyle(fontSize: 16, color: Colors.white),
-                textAlign: TextAlign.center,
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

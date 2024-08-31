@@ -138,6 +138,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF7D4),
       appBar: AppBar(
         title: Text(widget.isParkIn ? 'Park In' : 'Park Out'),
         backgroundColor: widget.isParkIn ? Colors.green : Colors.red,
@@ -162,7 +163,7 @@ class _CameraScreenState extends State<CameraScreen> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height / 1.7,
             child: Container(
-              color: Colors.white,
+              color: const Color(0xFFFFF7D4),
             ),
           ),
           Align(

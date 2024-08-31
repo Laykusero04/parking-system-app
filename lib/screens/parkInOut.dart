@@ -39,6 +39,7 @@ class _ParkinoutState extends State<Parkinout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF7D4),
       appBar: AppBar(
         title: Text(isParkIn ? 'Park in' : 'Park out'),
         backgroundColor: isParkIn ? Colors.green : Colors.red,

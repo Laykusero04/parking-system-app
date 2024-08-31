@@ -92,6 +92,7 @@ class _ParkinghistoryState extends State<Parkinghistory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF7D4),
       appBar: AppBar(
         title: const Text('Parking History'),
         backgroundColor: Colors.amber,
@@ -108,17 +109,6 @@ class _ParkinghistoryState extends State<Parkinghistory> {
               },
               items:
                   filterOptions.map<DropdownMenuItem<String>>((String value) {
-                if (value == 'Still Parking') {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Column(
-                      children: [
-                        const Divider(color: Colors.grey),
-                        Text(value),
-                      ],
-                    ),
-                  );
-                }
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -154,44 +144,134 @@ class _ParkinghistoryState extends State<Parkinghistory> {
               return const Center(child: Text('No matching records found'));
             }
 
-            return ListView(
-              children: filteredDocs.map((DocumentSnapshot document) {
+            return ListView.builder(
+              itemCount: filteredDocs.length,
+              itemBuilder: (context, index) {
                 Map<String, dynamic> data =
-                    document.data()! as Map<String, dynamic>;
+                    filteredDocs[index].data() as Map<String, dynamic>;
                 bool isStillParking = data['time_out'] == null;
 
-                Color cardColor =
-                    isStillParking ? Colors.green[800]! : Colors.grey[800]!;
-
-                return Card(
-                  color: cardColor,
-                  child: ListTile(
-                    title: Text(
-                      'Plate Number: ${data['plate_number'] ?? 'Unknown'}',
-                      style: const TextStyle(color: Colors.white),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    subtitle: Text(
-                      'Type of Vehicle: ${data['vehicle_type'] ?? 'Unknown'}\n'
-                      'Time in: ${data['time_in'] != null ? formatDateTime(data['time_in']) : 'Unknown'}\n'
-                      'Time out: ${data['time_out'] != null ? formatDateTime(data['time_out']) : 'Not out yet'}\n'
-                      'Date: ${data['date'] != null ? (data['date']) : 'Unknown'}',
-                      style: const TextStyle(color: Colors.white70),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isStillParking
+                              ? [Colors.amber[400]!, Colors.amber[900]!]
+                              : [Colors.brown[600]!, Colors.brown[900]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(13.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  data['plate_number'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    data['vehicle_type'] ?? 'Unknown',
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _buildInfoRow(Icons.login, 'Time in',
+                                formatDateTime(data['time_in'])),
+                            const SizedBox(height: 8),
+                            _buildInfoRow(
+                              Icons.logout,
+                              'Time out',
+                              data['time_out'] != null
+                                  ? formatDateTime(data['time_out'])
+                                  : 'Not out yet',
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isStillParking
+                                      ? 'Currently Parking'
+                                      : 'Parking Completed',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (widget.isAdmin)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.white),
+                                    onPressed: () {
+                                      _confirmDelete(context,
+                                          filteredDocs[index].reference);
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    trailing: widget.isAdmin
-                        ? IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.white),
-                            onPressed: () {
-                              _confirmDelete(context, document.reference);
-                            },
-                          )
-                        : null,
                   ),
                 );
-              }).toList(),
+              },
             );
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white.withOpacity(0.7), size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              children: [
+                TextSpan(
+                    text: '$label: ',
+                    style: TextStyle(color: Colors.white.withOpacity(0.7))),
+                TextSpan(
+                    text: value,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
